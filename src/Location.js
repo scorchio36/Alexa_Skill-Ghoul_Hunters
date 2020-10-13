@@ -41,7 +41,7 @@ class Location {
   updateLocation(direction) {
 
     //I may replace direction with an enum. I will keep it as an integer for now.
-    switch(direction) {
+    switch(this.convertNavIDtoInteger(direction)) {
 
       case 0:
         if(this.currentRow == 0) {
@@ -95,6 +95,26 @@ class Location {
     return LOCATION_GRID[this.currentRow][this.currentCol];
 
   }
+
+
+  /* The element ID of the button that is clicked is passed into the getNextLocation function.
+  This ID will be used to differentiate between which button was pressed. The getNextLocation
+  function expects integers so, this is a helper function to convert the element ID
+  to a corresponding integer. */
+  convertNavIDtoInteger(navID) {
+
+    if(navID == "NavN")
+      return 0;
+    else if(navID == "NavE")
+      return 1;
+    else if(navID == "NavS")
+      return 2;
+    else if(navID == "NavW")
+      return 3;
+    else
+      return null;
+  }
+
 }
 
 export default Location;
