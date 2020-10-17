@@ -1,7 +1,9 @@
 import React from 'react';
 import Location from './Location.js';
+import Client from './Client.js';
 
-
+// init to null so a variable doesn't have to be created for every new post request
+let http_post_payload = null;
 
 class Game extends React.Component {
 
@@ -9,6 +11,7 @@ class Game extends React.Component {
     super(props);
 
     this.locationHelper = new Location();
+    this.clientHelper = new Client();
 
     this.state = {
       location: this.locationHelper.getStartingLocation()
@@ -16,17 +19,27 @@ class Game extends React.Component {
 
     this.updateLocation = this.updateLocation.bind(this);
 
-    console.log("Here is the starting location:" + this.state.location);
-
   }
 
   //ONCLICK: Update the current location in the state when the button is clicked
   updateLocation(e) {
 
+    // cache the next location
+    let next_location = this.locationHelper.getNextLocation(e.target.id);
+
     //e.target.id == {NavN, NavE, NavS, NavW} - gets converted to an int in Location class
     this.setState({
-      location: this.locationHelper.getNextLocation(e.target.id)
+      location: next_location
     });
+
+    // Currently the payloads will only contain the next location of the player.
+    http_post_payload = JSON.stringify({
+      location: next_location
+    });
+
+    /* send a POST request payload with updated location to the local test server
+    whenever location is updated. */
+    this.clientHelper.sendPOSTRequest(http_post_payload);
   }
 
   render() {
