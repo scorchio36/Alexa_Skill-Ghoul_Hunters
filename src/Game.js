@@ -1,6 +1,9 @@
 import React from 'react';
 import Location from './Location.js';
 import Client from './Client.js';
+import StartScreen from './StartScreen.js';
+
+const uniqid = require('uniqid');
 
 // init to null so a variable doesn't have to be created for every new post request
 let http_post_payload = null;
@@ -14,7 +17,8 @@ class Game extends React.Component {
     this.clientHelper = new Client();
 
     this.state = {
-      location: this.locationHelper.getStartingLocation()
+      location: this.locationHelper.getStartingLocation(),
+      clientID: uniqid()
     };
 
     this.updateLocation = this.updateLocation.bind(this);
@@ -46,11 +50,12 @@ class Game extends React.Component {
 
     return (
         <div>
-          <h1>Location: {this.state.location}</h1>
+          {/*<h1>Location: {this.state.location}</h1>
           <button onClick={this.updateLocation} id="NavN"> North </button>
           <button onClick={this.updateLocation} id="NavE"> East </button>
           <button onClick={this.updateLocation} id="NavS"> South </button>
-          <button onClick={this.updateLocation} id="NavW"> West </button>
+          <button onClick={this.updateLocation} id="NavW"> West </button>*/}
+          <StartScreen gameState={this.state}/>
         </div>
     );
   }
