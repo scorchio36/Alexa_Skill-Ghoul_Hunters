@@ -14,7 +14,7 @@ class Game extends React.Component {
     super(props);
 
     this.locationHelper = new Location();
-    this.clientHelper = new Client();
+    this.clientHelper = new Client("ws://localhost:8080", this.wsClientNewMessageReceivedHandler, this);
 
     this.state = {
       location: this.locationHelper.getStartingLocation(),
@@ -22,6 +22,7 @@ class Game extends React.Component {
     };
 
     this.updateLocation = this.updateLocation.bind(this);
+    this.wsClientNewMessageReceivedHandler = this.wsClientNewMessageReceivedHandler.bind(this);
 
   }
 
@@ -41,25 +42,30 @@ class Game extends React.Component {
       location: next_location
     });
 
-    /* send a POST request payload with updated location to the local test server
-    whenever location is updated. */
-    this.clientHelper.sendPOSTRequest(http_post_payload);
+    // send a payload with updated location to local test server
+    this.clientHelper.sendMessage(http_post_payload);
   }
 
   render() {
 
     return (
         <div>
-          {/*<h1>Location: {this.state.location}</h1>
+          <h1>Location: {this.state.location}</h1>
           <button onClick={this.updateLocation} id="NavN"> North </button>
           <button onClick={this.updateLocation} id="NavE"> East </button>
           <button onClick={this.updateLocation} id="NavS"> South </button>
-          <button onClick={this.updateLocation} id="NavW"> West </button>*/}
-          <StartScreen gameState={this.state}/>
+          <button onClick={this.updateLocation} id="NavW"> West </button>
+          {/*<!--- <StartScreen gameState={this.state}/> --> */}
         </div>
     );
   }
 
+  // When the client helper receives a new message, this function will be run
+  wsClientNewMessageReceivedHandler(message) {
+    console.log(message);
+  }
 }
+
+
 
 export default Game;

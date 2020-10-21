@@ -1,14 +1,54 @@
 const http = require('http');
+const WebSocket = require('isomorphic-ws'); //isomorphic-ws must be used for WS to work in node/browser
 const SERVER_PORT = 8080;
 
-/* Helper class used to talk to the test server (and eventually the real server).
-Client will send post and get requests to the server whenever changes occur in the
-game state. Currently the protocol is pure HTTP. However, if time allows, I would
-rather use websockets to maintain connections with the server to improve game quality
-*/
+let msgRcvdCallback = null;
 
+/* Helper class used to talk to the test server (and eventually the real server).
+  This client helper class forms a websockets connection with the test server
+  upon creation of the helper class. Messages can be sent once the connection is
+  established with the sendMessage function */
 class Client {
 
+
+
+  constructor(hostname, messageReceivedCallback) {
+    /* messageReceivedCallback is a function that will be called by the user class
+    whenever the client helper receives a WS message.*/
+    this.wsClient = new WebSocket(hostname);
+    /* store the reference to the listener provided by GameComponent so that
+    it can be called later. I would use the this keyword to just store this
+    callback in a local variable, but I was getting an error, so this is a
+    workaround for now, since I am short on time.*/
+    msgRcvdCallback = messageReceivedCallback;
+    // Register WS state handlers with the WS client object
+    this.wsClient.onerror = this.handleWS_OnError;
+    this.wsClient.onopen = this.handleWS_onConnect;
+    this.wsClient.onmessage = this.handleWS_onMessage;
+    this.wsClient.onclose = this.handleWS_onClose;
+  }
+
+  // send a WS message to the test server
+  sendMessage(message) {
+    this.wsClient.send(message);
+  }
+
+  /* ===== Websockets Handlers ===== */
+  handleWS_OnError(error) {
+    console.log(error);
+  }
+
+  handleWS_onConnect(connection) {
+    console.log("WS Client connected.");
+  }
+
+  handleWS_onClose() {
+    console.log("WS Client disconnected.");
+  }
+
+  handleWS_onMessage(message) {
+    msgRcvdCallback(message.data);
+  }
 
   // This function sends a generic HTTP GET request to my local test server
   // Params to be added: path and query (object containing query params)
@@ -65,5 +105,8 @@ class Client {
     });
   }
 }
+
+
+
 
 export default Client;
