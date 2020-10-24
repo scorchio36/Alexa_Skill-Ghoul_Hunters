@@ -2,7 +2,7 @@ const http = require('http');
 const WebSocket = require('isomorphic-ws'); //isomorphic-ws must be used for WS to work in node/browser
 const SERVER_PORT = 8080;
 
-let msgRcvdCallback = null;
+let gameComponent = null;
 
 /* Helper class used to talk to the test server (and eventually the real server).
   This client helper class forms a websockets connection with the test server
@@ -10,17 +10,16 @@ let msgRcvdCallback = null;
   established with the sendMessage function */
 class Client {
 
-
-
-  constructor(hostname, messageReceivedCallback) {
+  constructor(hostname, GameComponent) {
     /* messageReceivedCallback is a function that will be called by the user class
     whenever the client helper receives a WS message.*/
     this.wsClient = new WebSocket(hostname);
-    /* store the reference to the listener provided by GameComponent so that
-    it can be called later. I would use the this keyword to just store this
-    callback in a local variable, but I was getting an error, so this is a
-    workaround for now, since I am short on time.*/
-    msgRcvdCallback = messageReceivedCallback;
+    /* store the reference to the Game Component. We need this reference so that
+    when the WS server receives an 'onmessage' event, Game Component can run it's
+    own function to update the UI and state of the game. I would use the this
+    keyword to just store this callback in a local variable, but I was getting an
+    error. This is a workaround for now. */
+    gameComponent = GameComponent;
     // Register WS state handlers with the WS client object
     this.wsClient.onerror = this.handleWS_OnError;
     this.wsClient.onopen = this.handleWS_onConnect;
@@ -30,7 +29,7 @@ class Client {
 
   // send a WS message to the test server
   sendMessage(message) {
-    this.wsClient.send(message);
+      this.wsClient.send(message);
   }
 
   /* ===== Websockets Handlers ===== */
@@ -47,7 +46,7 @@ class Client {
   }
 
   handleWS_onMessage(message) {
-    msgRcvdCallback(message.data);
+    gameComponent.wsClientNewMessageReceivedHandler(message.data);
   }
 
   // This function sends a generic HTTP GET request to my local test server

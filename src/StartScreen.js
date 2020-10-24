@@ -15,10 +15,17 @@ class StartScreen extends React.Component {
       return (
         <div>
           <h1>Ghoul Hunters</h1>
-          <button onClick={this.ajaxSubmitGETToCreateRoom}>Host a Game</button>
+          <button onClick={() => this.props.clientHelper.sendMessage(JSON.stringify({
+            clientID: this.props.gameState.clientID,
+            action: "create_room",
+            roomID: null }))}>Host a Game</button>
           <form>
-            <input type="text" id="join-game-text-box"></input>
-          </form><button onClick={this.ajaxSubmitGetToJoinRoom}>Join a Game</button>
+            <input type="text" id="join-game-text"></input>
+          </form>
+          <button onClick={() => this.props.clientHelper.sendMessage(JSON.stringify({
+            clientID: this.props.gameState.clientID,
+            action: "join_room",
+            roomID: document.querySelector('#join-game-text').value}))}>Join a Game</button>
         </div>
       );
   }
