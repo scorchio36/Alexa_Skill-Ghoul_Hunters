@@ -45,7 +45,10 @@ class RoomScreen extends React.Component {
 
   renderStartButton() {
     if(this.props.gameState.gameOwner) {
-      return (<button>Start Game</button>);
+      return (<button onClick={() => this.props.clientHelper.sendMessage(JSON.stringify({
+        action: "start_game",
+        clientID: this.props.gameState.clientID
+      }))}>Start Game</button>);
     }
     else {
       return (<p>Waiting for owner to start game...</p>);

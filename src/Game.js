@@ -3,6 +3,7 @@ import Location from './Location.js';
 import Client from './Client.js';
 import StartScreen from './StartScreen.js';
 import RoomScreen from './RoomScreen.js';
+import GameScreen from './GameScreen.js';
 
 const uniqid = require('uniqid');
 
@@ -23,7 +24,10 @@ class Game extends React.Component {
       roomID: null, // the game room that the client is currently in
       gameOwner: null, // whether or not the client owns the game room
       userInterface: "startScreen", // state variable to keep track of what UI user sees,
-      similarClients: [] // other clients that are in the same room as this client
+      similarClients: [], // other clients that are in the same room as this client,
+      role: null,
+      playing: false, // player can move around the mansion
+      dead: false // player has been killed by the ghoul in the game
     };
 
     this.updateLocation = this.updateLocation.bind(this);
@@ -55,7 +59,10 @@ class Game extends React.Component {
 
     // Currently the payloads will only contain the next location of the player.
     http_post_payload = JSON.stringify({
-      location: next_location
+      action: "update_location",
+      location: next_location,
+      clientID: this.state.clientID,
+      similarClients: this.state.similarClients
     });
 
     // send a payload with updated location to local test server
@@ -119,6 +126,48 @@ class Game extends React.Component {
 
       console.log(`New Client, ${jsonPayload.clientID}, created`);
     }
+
+    else if (jsonPayload.action == "game_started") {
+
+      this.setState({
+        ...this.state,
+        userInterface: "gameScreen",
+        role: jsonPayload.role
+      });
+
+      console.log(`Game has started. You have been assigned the role of ${jsonPayload.role}`);
+    }
+
+
+    else if (jsonPayload.action == "game_started") {
+
+      this.setState({
+        ...this.state,
+        userInterface: "gameScreen",
+        role: jsonPayload.role
+      });
+
+      console.log(`Players can now move around the mansion!`);
+    }
+
+    else if (jsonPayload.action == "allow_player_movement") {
+
+      this.setState({
+        ...this.state,
+        playing: true
+      });
+
+      console.log("Player is now allowed to move around the mansion.");
+
+    }
+
+    else if (jsonPayload.action == "killed_by_ghoul") {
+
+      this.setState({
+        ...this.state,
+        dead: true
+      });
+    }
   }
 
 
@@ -138,23 +187,16 @@ class Game extends React.Component {
     else if (this.state.userInterface == "roomScreen") {
       return (
         <div>
-          <RoomScreen gameState={this.state} />
+          <RoomScreen gameState={this.state} clientHelper={this.clientHelper}/>
         </div>
       );
     }
-    else if(this.state.userInterface == "playerScreen") {
+    else if(this.state.userInterface == "gameScreen") {
       return (
         <div>
-          <h1>Location: {this.state.location}</h1>
-          <button onClick={this.updateLocation} id="NavN"> North </button>
-          <button onClick={this.updateLocation} id="NavE"> East </button>
-          <button onClick={this.updateLocation} id="NavS"> South </button>
-          <button onClick={this.updateLocation} id="NavW"> West </button>
+          <GameScreen gameState={this.state} clientHelper={this.clientHelper} updateLocationCallback={this.updateLocation}/>
         </div>
       );
-    }
-    else if(this.state.userInterface == "ghostScreen") {
-
     }
 
   }
