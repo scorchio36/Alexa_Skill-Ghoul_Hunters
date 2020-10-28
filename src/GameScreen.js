@@ -1,7 +1,8 @@
 import React from 'react';
 import Timer from './Timer.js';
+import Searchables from './Searchables.js';
 
-const HIDE_TREASURE_TIME = 10;
+const HIDE_TREASURE_TIME = 60;
 const HEADSTART_TIME = 15;
 
 class GameScreen extends React.Component {
@@ -14,6 +15,7 @@ class GameScreen extends React.Component {
 
     return (
       <div>
+        {this.renderRole()}
         {this.renderGameHUD()}
       </div>
     );
@@ -39,6 +41,7 @@ class GameScreen extends React.Component {
           <button onClick={(clickEvent) => this.props.updateLocationCallback(clickEvent)} id="NavE"> East </button>
           <button onClick={(clickEvent) => this.props.updateLocationCallback(clickEvent)} id="NavS"> South </button>
           <button onClick={(clickEvent) => this.props.updateLocationCallback(clickEvent)} id="NavW"> West </button>
+          <Searchables gameState={this.props.gameState} clientHelper={this.props.clientHelper} treasureHidingSpot={this.props.treasureHidingSpot}/>
         </div>
       );
     }
@@ -52,8 +55,27 @@ class GameScreen extends React.Component {
     else {
       return (
         <div>
-          <p>Waiting on ghoul to hide the treasure...</p>
+          <Searchables gameState={this.props.gameState} clientHelper={this.props.clientHelper}/>
           <Timer initTimerValue={HIDE_TREASURE_TIME} timerCompletedCallback={() => this.hideTreasureCallback()}/>
+        </div>
+      );
+    }
+  }
+
+  // Show the player what their role is in the game
+  renderRole() {
+
+    if (this.props.gameState.role == "ghoul") {
+      return (
+        <div>
+          <h1>You are the GHOUL.</h1>
+        </div>
+      );
+    }
+    else {
+      return (
+        <div>
+          <h1>You are a PLAYER.</h1>
         </div>
       );
     }

@@ -4,6 +4,7 @@ import Client from './Client.js';
 import StartScreen from './StartScreen.js';
 import RoomScreen from './RoomScreen.js';
 import GameScreen from './GameScreen.js';
+import GameOverScreen from './GameOverScreen.js';
 
 const uniqid = require('uniqid');
 
@@ -17,6 +18,7 @@ class Game extends React.Component {
 
     this.locationHelper = new Location();
     this.clientHelper = new Client("ws://localhost:8080", this);
+    this.treasureHidingSpot = " ";
 
     this.state = {
       location: this.locationHelper.getStartingLocation(), // user's current location within the mansion
@@ -27,17 +29,22 @@ class Game extends React.Component {
       similarClients: [], // other clients that are in the same room as this client,
       role: null,
       playing: false, // player can move around the mansion
-      dead: false // player has been killed by the ghoul in the game
+      dead: false, // player has been killed by the ghoul in the game,
+      hasTreasure: false, // is the player currently holding the treasure
+      playerWon: false // tells gameOverScreen if player won the game
     };
 
     this.updateLocation = this.updateLocation.bind(this);
     this.wsClientNewMessageReceivedHandler = this.wsClientNewMessageReceivedHandler.bind(this);
     this.getCurrentUI = this.getCurrentUI.bind(this);
+    this.handlePlayAgainButtonClicked = this.handlePlayAgainButtonClicked.bind(this);
+    this.handleQuitButtonClicked = this.handleQuitButtonClicked.bind(this);
 
   }
 
   render() {
 
+    // renders the screen that the client should currently be seeing
     return (
         <div>
           {this.getCurrentUI()}
@@ -49,24 +56,37 @@ class Game extends React.Component {
   updateLocation(e) {
 
     // cache the next location
+    //e.target.id == {NavN, NavE, NavS, NavW} - gets converted to an int in Location class
     let next_location = this.locationHelper.getNextLocation(e.target.id);
 
-    //e.target.id == {NavN, NavE, NavS, NavW} - gets converted to an int in Location class
+    // change the location of the client
     this.setState({
       ...this.state,
       location: next_location
     });
 
-    // Currently the payloads will only contain the next location of the player.
-    http_post_payload = JSON.stringify({
+
+    /* Since we are handling location updates here, this would be a good place
+    to check the win condition for the player/hunter. If the player currently
+    has the treasure and steps into the grand foyer, then they win the game. Let
+    the server know this with a 'player_wins' action. */
+    if (this.state.hasTreasure && next_location == "Grand Foyer") {
+
+      this.clientHelper.sendMessage(JSON.stringify({
+        action: "player_wins",
+        clientID: this.state.clientID
+      }));
+
+      console.log("Player wins!");
+    }
+
+    // send a payload with updated location to local test server
+    this.clientHelper.sendMessage(JSON.stringify({
       action: "update_location",
       location: next_location,
       clientID: this.state.clientID,
       similarClients: this.state.similarClients
-    });
-
-    // send a payload with updated location to local test server
-    this.clientHelper.sendMessage(http_post_payload);
+    }));
   }
 
   // When the client helper receives a new message, this function will be run
@@ -152,6 +172,8 @@ class Game extends React.Component {
 
     else if (jsonPayload.action == "allow_player_movement") {
 
+      this.treasureHidingSpot = jsonPayload.searchable;
+
       this.setState({
         ...this.state,
         playing: true
@@ -166,6 +188,25 @@ class Game extends React.Component {
       this.setState({
         ...this.state,
         dead: true
+      });
+    }
+
+
+    else if (jsonPayload.action == "game_over_player_wins") {
+
+      this.setState({
+        ...this.state,
+        userInterface: "gameOverScreen",
+        playerWon: jsonPayload.isWinner
+      });
+    }
+
+    else if (jsonPayload.action == "game_over_ghoul_wins") {
+
+      this.setState({
+        ...this.state,
+        userInterface: "gameOverScreen",
+        playerWon: jsonPayload.isWinner
       });
     }
   }
@@ -194,11 +235,53 @@ class Game extends React.Component {
     else if(this.state.userInterface == "gameScreen") {
       return (
         <div>
-          <GameScreen gameState={this.state} clientHelper={this.clientHelper} updateLocationCallback={this.updateLocation}/>
+          <GameScreen gameState={this.state} clientHelper={this.clientHelper} updateLocationCallback={this.updateLocation} treasureHidingSpot={this.treasureHidingSpot}/>
         </div>
       );
     }
 
+    else if(this.state.userInterface == "gameOverScreen") {
+      return (
+        <div>
+          <GameOverScreen
+            gameState={this.state}
+            clientHelper={this.clientHelper}
+            handlePlayAgainButtonClicked={this.handlePlayAgainButtonClicked}
+            handleQuitButtonClicked={this.handleQuitButtonClicked} />
+        </div>
+      );
+    }
+  }
+
+
+  handlePlayAgainButtonClicked() {
+
+    this.setState({
+      ...this.state,
+      location: this.locationHelper.getStartingLocation(),
+      userInterface: "roomScreen",
+      //similarClients: [] server needs to check if anyone left
+      role: null,
+      playing: false,
+      dead: false,
+      hasTreasure: false,
+      playerWon: false
+    });
+  }
+
+  handleQuitButtonClicked() {
+    this.setState({
+      ...this.state,
+      location: this.locationHelper.getStartingLocation(),
+      roomID: null,
+      userInterface: "startScreen",
+      gameOwner: false,
+      role: null,
+      playing: false,
+      dead: false,
+      hasTreasure: false,
+      playerWon: false
+    });
   }
 }
 
