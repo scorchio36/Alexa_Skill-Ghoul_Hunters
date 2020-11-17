@@ -252,7 +252,8 @@ class Searchables extends React.Component {
       action: "treasure_hidden",
       location: this.state.hidingLocation,
       searchable: e.target.id,
-      clientID: this.props.gameState.clientID
+      clientID: this.props.gameState.clientID,
+      roomID: this.props.gameState.roomID
     }));
   }
 

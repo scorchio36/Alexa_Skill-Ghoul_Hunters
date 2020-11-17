@@ -27,6 +27,14 @@ class Location {
 
   }
 
+  // called to reset current row and column on a new game
+  reset() {
+
+    this.currentRow = STARTING_ROW;
+    this.currentCol = STARTING_COL;
+
+  }
+
   /*Accepts a param that tells you in which direction the user moved. This function
   will update the current column and row based on where the user moved.
 

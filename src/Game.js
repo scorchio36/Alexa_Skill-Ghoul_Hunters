@@ -209,6 +209,21 @@ class Game extends React.Component {
         playerWon: jsonPayload.isWinner
       });
     }
+
+    else if (jsonPayload.action == "player_quit") {
+
+      // remove clientID that quit from similar clients array
+      let newSimilarClients = this.state.similarClients;
+      let removalIndex = newSimilarClients.indexOf(jsonPayload.quitterID);
+      if (removalIndex != -1) {
+        newSimilarClients.splice(removalIndex, 1);
+      }
+
+      this.setState({
+        ...this.state,
+        similarClients: newSimilarClients
+      });
+    }
   }
 
 
@@ -256,6 +271,9 @@ class Game extends React.Component {
 
   handlePlayAgainButtonClicked() {
 
+    this.locationHelper.reset();
+
+    // reset things on the client side
     this.setState({
       ...this.state,
       location: this.locationHelper.getStartingLocation(),
@@ -267,13 +285,24 @@ class Game extends React.Component {
       hasTreasure: false,
       playerWon: false
     });
+
+    // tell the server to reset settings for client
+    this.clientHelper.sendMessage(JSON.stringify({
+      clientID: this.state.clientID,
+      action: 'play_again'
+    }));
   }
 
+  // reset things on the client side
   handleQuitButtonClicked() {
+
+    this.locationHelper.reset();
+
     this.setState({
       ...this.state,
       location: this.locationHelper.getStartingLocation(),
       roomID: null,
+      similarClients: [],
       userInterface: "startScreen",
       gameOwner: false,
       role: null,
@@ -282,6 +311,12 @@ class Game extends React.Component {
       hasTreasure: false,
       playerWon: false
     });
+
+    // tell the server to reset settings for client
+    this.clientHelper.sendMessage(JSON.stringify({
+      clientID: this.state.clientID,
+      action: 'quit_game'
+    }));
   }
 }
 
